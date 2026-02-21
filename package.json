@@ -1,0 +1,20 @@
+{
+  "scripts": {
+    "serve": "node public/index.js",
+    "start": "node public/index.js",
+    "orchestr": "node bootstrap/cli.js",
+    "migrate": "node bootstrap/cli.js migrate",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@orchestr-sh/orchestr": "^1.9.4",
+    "drizzle-orm": "^0.45.1",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -1,0 +1,13 @@
+.git
+.idea
+node_modules
+coverage
+*.sqlite
+database/*.sqlite
+.env
+.env.*
+*.md
+.dockerignore
+Dockerfile
+docker-compose*.yml
+.github
