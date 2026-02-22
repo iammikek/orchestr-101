@@ -66,7 +66,7 @@ Then open **http://localhost:3000** for the API.
 ```
 orchestr-app/
 ├── bootstrap/
-│   ├── app.js              # Creates app, registers providers (like FastAPI app factory)
+│   ├── app.js              # Creates app, registers providers (like Laravel bootstrap/app.php)
 │   └── cli.js              # CLI entry (migrate, seed, etc.)
 ├── public/
 │   └── index.js            # HTTP entry – boots app, ensures table, starts server
@@ -77,12 +77,12 @@ orchestr-app/
 ├── app/
 │   ├── Providers/         # AppServiceProvider, RouteServiceProvider
 │   ├── Console/Kernel.js   # Console commands (migrate, seed, …)
-│   ├── Models/Item.js      # Ensemble model (like SQLAlchemy Item)
+│   ├── Models/Item.js      # Ensemble model (like Laravel Eloquent model)
 │   ├── Services/ItemService.js  # Business logic (stats)
 │   ├── helpers/db.js      # Raw DB helper for UPDATE/DELETE workaround
 │   └── appInstance.js     # App reference for helpers
 ├── routes/
-│   └── api.js             # All HTTP routes (like main.py routes)
+│   └── api.js             # All HTTP routes (like Laravel routes/api.php)
 ├── middleware/
 │   └── verifyApiKey.js    # API key auth for DELETE
 ├── database/
@@ -115,7 +115,7 @@ orchestr-app/
 | `vitest` (dev) | Test runner and assertions |
 | `@vitest/coverage-v8` (dev) | Coverage report |
 
-**Orchestr equivalent of FastAPI + uvicorn + SQLAlchemy:** one framework handles app, HTTP, and DB.
+**Orchestr equivalent of Laravel:** one framework handles app, HTTP, and DB (like Laravel + Eloquent).
 
 **Copy-paste: `package.json` (scripts + deps)**
 
@@ -146,7 +146,7 @@ orchestr-app/
 
 ## 3. The Orchestr App
 
-**What it is:** The app is created in `bootstrap/app.js` (like creating the FastAPI `app`). The HTTP server is started in `public/index.js` (like running `uvicorn main:app`).
+**What it is:** The app is created in `bootstrap/app.js` (like Laravel’s `bootstrap/app.php` and service providers). The HTTP server is started in `public/index.js` (like running `php artisan serve`).
 
 **Concepts:**
 
@@ -167,16 +167,16 @@ orchestr-app/
 | `/items/:item_id` | DELETE | Delete (requires `X-API-Key`) |
 | `/items/stats/summary` | GET | Item statistics |
 
-**Orchestr equivalent of initial FastAPI `main.py`:**
+**Orchestr equivalent of Laravel `routes/api.php`:**
 
-In **routes/api.js** you register routes (instead of decorators in one file):
+In **routes/api.js** you register routes (like Laravel’s route files):
 
 ```javascript
 const { Route } = require('@orchestr-sh/orchestr');
 
 function registerRoutes() {
   Route.get('/', (req, res) => {
-    res.json({ message: 'Hello from FastAPI!' });
+    res.json({ message: 'Hello from Orchestr!' });
   });
 
   Route.get('/health', (req, res) => {
@@ -287,15 +287,15 @@ npm run orchestr migrate
 
 ## 8. Routes and the items API
 
-**Concepts (Orchestr vs FastAPI):**
+**Concepts (Orchestr vs Laravel):**
 
-| FastAPI | Orchestr |
-|--------|----------|
-| `@app.get("/items")` + `def list_items(skip=0, limit=10):` | `Route.get('/items', async (req, res) => { ... })` – read `req.query.skip`, `req.query.limit` |
-| `@app.get("/items/{item_id}")` | `Route.get('/items/:item_id', ...)` – read `req.routeParam('item_id')` |
-| `@app.post("/items", status_code=201)` | `Route.post('/items', ...)` then `res.status(201).json(...)` |
-| Pydantic `ItemCreate` | Validate in handler: check `req.body.name`, `req.body.price`, etc.; return 422 if missing |
-| `Depends(get_db)` | DB is global via Ensemble; `Item` uses the connection set in `AppServiceProvider.boot()` |
+| Laravel | Orchestr |
+|---------|----------|
+| `Route::get('/items', ...)` + `$request->query('skip')`, `$request->query('limit')` | `Route.get('/items', async (req, res) => { ... })` – read `req.query.skip`, `req.query.limit` |
+| `Route::get('/items/{item_id}', ...)` with `$item_id` | `Route.get('/items/:item_id', ...)` – read `req.routeParam('item_id')` |
+| `Route::post('/items', ...)` + `return response()->json(..., 201)` | `Route.post('/items', ...)` then `res.status(201).json(...)` |
+| Form Request (e.g. `StoreItemRequest`) | Validate in handler: check `req.body.name`, `req.body.price`, etc.; return 422 if missing |
+| Eloquent model + default DB connection | Ensemble model; `Item` uses the connection set in `AppServiceProvider.boot()` |
 
 **List items with query parameters:**
 
