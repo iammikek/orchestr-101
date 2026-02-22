@@ -15,8 +15,9 @@ A step-by-step guide to building a minimal Orchestr app with Docker, SQLite, and
 7. **A test framework** (Vitest + HTTP server) for API tests
 8. **A CI pipeline** (GitHub Actions) for automated testing and Docker build
 9. **API key authentication** (middleware) for protecting endpoints
-10. **Service layer** (`app/Services/ItemService.js`) separating business logic from routes
-11. **Database schema** – migrations and table creation on startup
+10. **ItemController** (`app/Controllers/ItemController.js`) – Laravel-style resource controller
+11. **ItemService** (`app/Services/ItemService.js`) – business logic used by the controller (e.g. stats)
+12. **Database schema** – migrations and table creation on startup
 
 By the end, you can start the API with a single command.
 
@@ -36,8 +37,9 @@ By the end, you can start the API with a single command.
 10. [Add a test framework](#10-add-a-test-framework)
 11. [Add a CI pipeline](#11-add-a-ci-pipeline)
 12. [Add API key authentication](#12-add-api-key-authentication)
-13. [Add a service layer](#13-add-a-service-layer)
-14. [Quick Reference](#14-quick-reference)
+13. [Add ItemController](#13-add-itemcontroller)
+14. [Add ItemService into the controller](#14-add-itemservice-into-the-controller)
+15. [Quick Reference](#15-quick-reference)
 
 ---
 
@@ -77,8 +79,9 @@ orchestr-app/
 ├── app/
 │   ├── Providers/         # AppServiceProvider, RouteServiceProvider
 │   ├── Console/Kernel.js   # Console commands (migrate, seed, …)
+│   ├── Controllers/ItemController.js  # Item resource controller (Laravel-style)
 │   ├── Models/Item.js      # Ensemble model (like Laravel Eloquent model)
-│   ├── Services/ItemService.js  # Business logic (stats)
+│   ├── Services/ItemService.js  # Business logic used by ItemController (e.g. stats)
 │   ├── helpers/db.js      # Raw DB helper for UPDATE/DELETE workaround
 │   └── appInstance.js     # App reference for helpers
 ├── routes/
@@ -458,9 +461,38 @@ deleteItemRoute.addMiddleware(verifyApiKey);
 
 ---
 
-## 13. Add a service layer
+## 13. Add ItemController
 
-**What you use:** A service class that holds business logic (e.g. stats). Routes stay thin and call the service.
+**What you use:** A resource controller (Laravel-style) that handles all item actions. Routes delegate to controller methods so route files stay thin.
+
+**Controller (`app/Controllers/ItemController.js`):**
+
+- `ItemController.index(req, res)` – list items (query: skip, limit)
+- `ItemController.show(req, res)` – get one item by id
+- `ItemController.store(req, res)` – create item
+- `ItemController.update(req, res)` – partial update
+- `ItemController.destroy(req, res)` – delete item
+- `ItemController.statsSummary(req, res)` – item statistics (uses ItemService)
+
+**Routes (`routes/api.js`):** Wire routes to the controller:
+
+```javascript
+const { ItemController } = require('../app/Controllers/ItemController');
+
+Route.get('/items', (req, res) => ItemController.index(req, res));
+Route.get('/items/stats/summary', (req, res) => ItemController.statsSummary(req, res));
+Route.get('/items/:item_id', (req, res) => ItemController.show(req, res));
+Route.post('/items', (req, res) => ItemController.store(req, res));
+Route.patch('/items/:item_id', (req, res) => ItemController.update(req, res));
+const deleteItemRoute = Route.delete('/items/:item_id', (req, res) => ItemController.destroy(req, res));
+deleteItemRoute.addMiddleware(verifyApiKey);
+```
+
+---
+
+## 14. Add ItemService into the controller
+
+**What you use:** A service class that holds business logic (e.g. stats). The **controller** calls the service instead of putting that logic in the controller.
 
 **Service (`app/Services/ItemService.js`):**
 
@@ -479,11 +511,11 @@ class ItemService {
 }
 ```
 
-**Route:** In `routes/api.js`, `GET /items/stats/summary` calls `ItemService.getStats()` and returns the result as JSON.
+**In the controller:** `ItemController.statsSummary(req, res)` calls `ItemService.getStats()` and returns the result as JSON. The controller stays thin; the service holds the stats logic.
 
 ---
 
-## 14. Quick Reference
+## 15. Quick Reference
 
 | Goal | Command |
 |------|---------|
@@ -498,6 +530,7 @@ class ItemService {
 ---
 
 ## Deploying to GitHub
+
 
 1. Create a new repository on GitHub.
 2. Push your code (CI runs on `main`):
