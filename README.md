@@ -1,6 +1,6 @@
 # Getting Fast at Orchestr
 
-A step-by-step guide to building a minimal Orchestr app with Docker, SQLite, and tests. This project replicates [**fastAPI-101**](https://github.com/iammikek/fastAPI-101) in [Orchestr](https://www.npmjs.com/package/@orchestr-sh/orchestr) (Laravel-style Node.js). It demonstrates routing, path/query parameters, request bodies, database integration, and testing.
+A step-by-step guide to building a minimal Orchestr app with Docker, SQLite, and tests. This project follows [**Laravel**](https://laravel.com/)-style patterns in [Orchestr](https://www.npmjs.com/package/@orchestr-sh/orchestr) (Laravel-style Node.js). It demonstrates routing, path/query parameters, request bodies, database integration, and testing.
 
 ---
 
@@ -88,9 +88,9 @@ orchestr-app/
 ├── database/
 │   └── migrations/        # Items table migration (JS)
 ├── tests/
-│   ├── setup.js           # Set DB_DATABASE to test DB (like conftest.py)
+│   ├── setup.js           # Set DB_DATABASE to test DB (like Pest bootstrap)
 │   ├── helpers/app.js     # createTestServer, clearItems
-│   └── api.test.js        # API tests (like test_main.py)
+│   └── api.test.js        # API tests (like Pest feature tests)
 ├── package.json
 ├── Dockerfile
 ├── docker-compose.yml
@@ -400,10 +400,10 @@ module.exports = { Item };
 
 | Tool | Purpose |
 |------|---------|
-| **Vitest** | Test runner and assertions (like pytest). |
+| **Vitest** | Test runner and assertions (like Pest). |
 | **tests/setup.js** | Runs before tests; sets `process.env.DB_DATABASE` to `database/test.sqlite` so tests don’t touch the main DB. |
 | **tests/helpers/app.js** | `createTestServer()` – boots app, ensures items table, starts HTTP server on a random port; `clearItems(app)` – deletes all rows between tests. |
-| **tests/api.test.js** | API tests: request helpers and 20 tests mirroring [fastAPI-101](https://github.com/iammikek/fastAPI-101)’s `test_main.py`. |
+| **tests/api.test.js** | API tests: request helpers and 20 tests (like Pest feature tests). |
 
 **Run tests:**
 

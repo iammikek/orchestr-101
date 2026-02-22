@@ -1,5 +1,5 @@
 /**
- * API tests – mirror first-fastapi tests/test_main.py
+ * API tests – Laravel-style API test suite
  * Run: npm run test
  * Uses Vitest globals (describe, it, expect, beforeAll, afterAll, beforeEach).
  */
@@ -41,7 +41,7 @@ describe('API', () => {
   it('GET / returns 200 and the hello message', async () => {
     const res = await request('GET', '/');
     expect(res.status).toBe(200);
-    expect(res.json).toEqual({ message: 'Hello from FastAPI!' });
+    expect(res.json).toEqual({ message: 'Hello from Orchestr!' });
   });
 
   it('GET /health returns 200 and status ok', async () => {

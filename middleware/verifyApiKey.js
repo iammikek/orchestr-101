@@ -1,7 +1,7 @@
 const API_KEY = process.env.API_KEY || 'dev-key-123';
 
 /**
- * Middleware: verify X-API-Key header (replicates FastAPI verify_api_key).
+ * Middleware: verify X-API-Key header (Laravel-style auth middleware).
  * Returns 401 if missing or invalid.
  */
 function verifyApiKey(req, res, next) {

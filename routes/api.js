@@ -17,7 +17,7 @@ function itemToDict(row) {
 function registerRoutes() {
   // Root
   Route.get('/', (req, res) => {
-    res.json({ message: 'Hello from FastAPI!' });
+    res.json({ message: 'Hello from Orchestr!' });
   });
 
   // Health

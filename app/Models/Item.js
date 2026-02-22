@@ -1,7 +1,7 @@
 const { Ensemble } = require('@orchestr-sh/orchestr');
 
 /**
- * Item model - replicates FastAPI Item (id, name, description, price, category)
+ * Item model – Laravel-style Eloquent equivalent (id, name, description, price, category)
  */
 class Item extends Ensemble {
   constructor(attributes, fromDatabase) {

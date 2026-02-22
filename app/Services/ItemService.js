@@ -1,7 +1,7 @@
 const { getRawDb } = require('../helpers/db');
 
 /**
- * Service layer: business logic for items (replicates FastAPI ItemService.get_stats)
+ * Service layer: business logic for items (Laravel-style service)
  */
 class ItemService {
   static async getStats() {
