@@ -21,7 +21,7 @@ class ItemController {
     return (async () => {
       const skip = Math.max(0, parseInt(req.query.skip, 10) || 0);
       const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
-      const rows = await Item.query().offset(skip).limit(limit).get();
+      const rows = await Item.query().orderBy('id', 'asc').offset(skip).limit(limit).get();
       res.json(rows.map((r) => itemToDict(r)));
     })();
   }

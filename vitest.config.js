@@ -7,6 +7,7 @@ module.exports = {
     setupFiles: [path.join(__dirname, 'tests', 'setup.js')],
     include: ['tests/**/*.test.js'],
     exclude: ['node_modules', 'dist'],
+    maxWorkers: 1,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

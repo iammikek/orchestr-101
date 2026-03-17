@@ -1,4 +1,3 @@
-const { describe, it, expect, beforeAll, afterAll } = require('vitest');
 const { createTestServer } = require('./helpers/app');
 
 let client;
