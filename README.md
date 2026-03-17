@@ -23,6 +23,16 @@ By the end, you can start the API with a single command.
 
 ---
 
+## Prerequisites
+
+- Node.js 22.x
+- Python 3, make, and a C/C++ compiler (native deps like better-sqlite3)
+- Docker 24+ (optional, recommended for consistent local runs)
+
+If you are on macOS and see native build errors for better-sqlite3, use Node 22 via nvm and ensure Xcode Command Line Tools are installed. Alternatively, run with Docker Compose.
+
+---
+
 ## Table of Contents
 
 1. [Project Structure](#1-project-structure)
@@ -40,6 +50,8 @@ By the end, you can start the API with a single command.
 13. [Add ItemController](#13-add-itemcontroller)
 14. [Add ItemService into the controller](#14-add-itemservice-into-the-controller)
 15. [Quick Reference](#15-quick-reference)
+16. [Environment Variables](#16-environment-variables)
+17. [Troubleshooting](#17-troubleshooting)
 
 ---
 
@@ -91,13 +103,17 @@ orchestr-app/
 ├── database/
 │   └── migrations/        # Items table migration (JS)
 ├── tests/
-│   ├── setup.js           # Set DB_DATABASE to test DB (like Pest bootstrap)
-│   ├── helpers/app.js     # createTestServer, clearItems
-│   └── api.test.js        # API tests (like Pest feature tests)
+│   ├── setup.js                   # Set DB_DATABASE to test DB (like Pest bootstrap)
+│   ├── helpers/app.js             # createTestServer, clearItems
+│   ├── api.test.js                # API tests (like Pest feature tests)
+│   ├── ItemController.test.js     # Unit tests for controller behavior
+│   └── ItemService.test.js        # Unit tests for service logic
 ├── package.json
+├── vitest.config.js
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .dockerignore
+├── .env.example
 ├── .github/workflows/ci.yml
 └── README.md
 ```
@@ -526,6 +542,46 @@ class ItemService {
 | Migrations | `npm run migrate` or `npm run orchestr migrate` |
 | API base URL | http://localhost:3000 |
 | DELETE auth | Header `X-API-Key: dev-key-123` (or set `API_KEY`) |
+
+---
+
+## 16. Environment Variables
+
+Use `.env` to configure the app; see [.env.example](.env.example) for all options.
+
+- APP_NAME, APP_ENV, APP_DEBUG, APP_PORT, APP_HOST
+- DB_CONNECTION, DB_DATABASE
+- API_KEY
+
+Defaults work out of the box for local development.
+
+---
+
+## 17. Troubleshooting
+
+- better-sqlite3 build errors on macOS: install Xcode Command Line Tools, use Node 22 via nvm, or run with Docker Compose.
+- Module not found: better-sqlite3: install the dependency (`npm install better-sqlite3`) or run under Docker, which bundles build tools.
+- Port already in use: set `APP_PORT` to a different port.
+
+---
+
+## OpenAPI
+
+- Spec endpoint: `GET /openapi.json`
+- Spec file: `openapi.json`
+- Basic validation test: `tests/openapi.test.js`
+
+Visualize with Swagger UI, Redocly, or Stoplight Studio.
+
+---
+
+## API Docs
+
+- Human-friendly docs UI at `GET /docs` (Swagger UI from CDN)
+- Tied to `openapi.json`
+- Basic UI test: `tests/docs.test.js`
+
+This is a zero-dependency integration using the Swagger UI CDN.
 
 ---
 
