@@ -1,7 +1,5 @@
 /**
  * Route Service Provider
- *
- * Loads application route files. Pattern from orchestr-sh-skeleton.
  */
 
 const { RouteServiceProvider: BaseRouteServiceProvider } = require('@orchestr-sh/orchestr');
@@ -9,7 +7,9 @@ const { RouteServiceProvider: BaseRouteServiceProvider } = require('@orchestr-sh
 class RouteServiceProvider extends BaseRouteServiceProvider {
   async boot() {
     const { registerRoutes } = require('../../routes/api');
+    const { registerWebRoutes } = require('../../routes/web');
     registerRoutes();
+    registerWebRoutes();
   }
 }
 

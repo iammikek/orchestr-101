@@ -1,119 +1,97 @@
-const { Item } = require('../Models/Item');
 const { ItemService } = require('../Services/ItemService');
-const { runUpdate, runDelete } = require('../helpers/db');
-
-/**
- * Item controller – Laravel-style resource controller.
- * ItemService is used for business logic (e.g. stats).
- */
-function itemToDict(row) {
-  return {
-    id: row.getAttribute('id'),
-    name: row.getAttribute('name'),
-    description: row.getAttribute('description'),
-    price: row.getAttribute('price'),
-    category: row.getAttribute('category'),
-  };
-}
+const { ApiSerializer } = require('../Support/ApiSerializer');
+const { Validator } = require('../Support/Validator');
+const { errorJson } = require('../Support/Http');
 
 class ItemController {
-  static index(req, res) {
-    return (async () => {
-      const skip = Math.max(0, parseInt(req.query.skip, 10) || 0);
-      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
-      const rows = await Item.query().orderBy('id', 'asc').offset(skip).limit(limit).get();
-      res.json(rows.map((r) => itemToDict(r)));
-    })();
+  static async index(req, res) {
+    const skip = req.query.skip !== undefined ? parseInt(req.query.skip, 10) : 0;
+    const limit = req.query.limit !== undefined ? parseInt(req.query.limit, 10) : 10;
+
+    const validationData = {
+      skip,
+      limit,
+      min_price: req.query.min_price ?? null,
+      max_price: req.query.max_price ?? null,
+      category_id: req.query.category_id ?? null,
+      name_contains: req.query.name_contains ?? null,
+    };
+
+    const error = Validator.firstError(validationData, {
+      skip: ['integer', 'min:0'],
+      limit: ['integer', 'min:1', 'max:100'],
+      min_price: ['nullable', 'numeric', 'gt:0'],
+      max_price: ['nullable', 'numeric', 'gt:0'],
+      category_id: ['nullable', 'integer', 'min:1'],
+      name_contains: ['nullable', 'string', 'min:1', 'max:255'],
+    });
+    if (error) {
+      errorJson(res, error, 422);
+      return;
+    }
+
+    const safeSkip = Math.max(0, skip);
+    const safeLimit = Math.min(100, Math.max(1, limit));
+
+    const filters = {};
+    if (req.query.min_price != null) filters.min_price = req.query.min_price;
+    if (req.query.max_price != null) filters.max_price = req.query.max_price;
+    if (req.query.category_id != null) filters.category_id = parseInt(req.query.category_id, 10);
+    if (req.query.name_contains != null) filters.name_contains = req.query.name_contains;
+
+    const [rows, total] = await ItemService.listItems(safeSkip, safeLimit, filters);
+    res.json({
+      items: rows.map((row) => ApiSerializer.item(row.item, row.category)),
+      total,
+      skip: safeSkip,
+      limit: safeLimit,
+    });
   }
 
-  static show(req, res) {
-    return (async () => {
-      const id = parseInt(req.routeParam('item_id'), 10);
-      if (Number.isNaN(id)) {
-        res.status(404).json({ detail: 'Item not found' });
-        return;
-      }
-      const row = await Item.find(id);
-      if (!row) {
-        res.status(404).json({ detail: 'Item not found' });
-        return;
-      }
-      res.json(itemToDict(row));
-    })();
+  static async show(req, res) {
+    const itemId = parseInt(req.routeParam('item_id'), 10);
+    const row = await ItemService.getById(itemId);
+    res.json(ApiSerializer.item(row.item, row.category));
   }
 
-  static store(req, res) {
-    return (async () => {
-      await req.parseBody();
-      const body = req.body || {};
-      const name = body.name;
-      const price = body.price;
-      if (name == null || price == null) {
-        res.status(422).json({ detail: 'name and price are required' });
-        return;
-      }
-      const row = await Item.create({
-        name: String(name),
-        description: body.description != null ? String(body.description) : null,
-        price: Number(price),
-        category: body.category != null ? String(body.category) : null,
-      });
-      res.status(201).json(itemToDict(row));
-    })();
+  static async store(req, res) {
+    const body = req.body || {};
+    const error = Validator.firstError(body, {
+      name: ['required', 'string', 'min:1', 'max:255'],
+      description: ['nullable', 'string'],
+      price: ['required', 'numeric', 'gt:0'],
+      category_id: ['nullable', 'integer', 'min:1'],
+    });
+    if (error) {
+      errorJson(res, error, 422);
+      return;
+    }
+
+    const row = await ItemService.create(
+      String(body.name),
+      body.description ?? null,
+      Number(body.price).toFixed(2),
+      body.category_id != null ? parseInt(body.category_id, 10) : null,
+    );
+    res.status(201).json(ApiSerializer.item(row.item, row.category));
   }
 
-  static update(req, res) {
-    return (async () => {
-      await req.parseBody();
-      const id = parseInt(req.routeParam('item_id'), 10);
-      if (Number.isNaN(id)) {
-        res.status(404).json({ detail: 'Item not found' });
-        return;
-      }
-      const row = await Item.find(id);
-      if (!row) {
-        res.status(404).json({ detail: 'Item not found' });
-        return;
-      }
-      const body = req.body || {};
-      const updates = {};
-      if (body.name !== undefined) updates.name = String(body.name);
-      if (body.description !== undefined) updates.description = body.description != null ? String(body.description) : null;
-      if (body.price !== undefined) updates.price = Number(body.price);
-      if (body.category !== undefined) updates.category = body.category != null ? String(body.category) : null;
-      if (Object.keys(updates).length > 0) {
-        const setClause = Object.keys(updates).map((k) => `${k} = ?`).join(', ');
-        const bindings = [...Object.values(updates), id];
-        await runUpdate(`UPDATE items SET ${setClause} WHERE id = ?`, bindings);
-      }
-      const updated = await Item.find(id);
-      res.json(itemToDict(updated));
-    })();
+  static async update(req, res) {
+    const itemId = parseInt(req.routeParam('item_id'), 10);
+    const body = req.body || {};
+    const row = await ItemService.update(itemId, body);
+    res.json(ApiSerializer.item(row.item, row.category));
   }
 
-  static destroy(req, res) {
-    return (async () => {
-      const id = parseInt(req.routeParam('item_id'), 10);
-      if (Number.isNaN(id)) {
-        res.status(404).json({ detail: 'Item not found' });
-        return;
-      }
-      const row = await Item.find(id);
-      if (!row) {
-        res.status(404).json({ detail: 'Item not found' });
-        return;
-      }
-      await runDelete('DELETE FROM items WHERE id = ?', [id]);
-      res.status(204).send();
-    })();
+  static async destroy(req, res) {
+    const itemId = parseInt(req.routeParam('item_id'), 10);
+    await ItemService.delete(itemId);
+    res.status(204).send();
   }
 
-  /** Stats summary – uses ItemService for business logic */
-  static statsSummary(req, res) {
-    return (async () => {
-      const stats = await ItemService.getStats();
-      res.json(stats);
-    })();
+  static async statsSummary(req, res) {
+    const stats = await ItemService.getStats();
+    res.json(stats);
   }
 }
 

@@ -2,29 +2,27 @@ services:
   api:
     build: .
     ports:
-      - "3000:3000"
+      - "8005:8005"
     environment:
       - NODE_ENV=production
-      - APP_PORT=3000
+      - APP_PORT=8005
       - APP_HOST=0.0.0.0
       - DB_DATABASE=/app/database/database.sqlite
-      - API_KEY=${API_KEY:-dev-key-123}
+      - JWT_SECRET=docker-jwt-secret-for-orchestr-101-dev
     volumes:
-      # Persist SQLite data (optional)
       - app-data:/app/database
 
-  # Development: mount source and run with node (no hot reload unless you add nodemon)
   api-dev:
     build: .
     profiles:
       - dev
     ports:
-      - "3000:3000"
+      - "8005:8005"
     environment:
-      - APP_PORT=3000
+      - APP_PORT=8005
       - APP_HOST=0.0.0.0
       - DB_DATABASE=/app/database/database.sqlite
-      - API_KEY=${API_KEY:-dev-key-123}
+      - JWT_SECRET=docker-jwt-secret-for-orchestr-101-dev
     volumes:
       - .:/app
       - /app/node_modules

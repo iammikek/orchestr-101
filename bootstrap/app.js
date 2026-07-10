@@ -1,8 +1,5 @@
 /**
  * Application Bootstrap
- *
- * Creates and configures the application with service providers and config.
- * Pattern from orchestr-sh-skeleton.
  */
 
 require('reflect-metadata');
@@ -11,6 +8,7 @@ const {
   Application,
   ConfigServiceProvider,
   DatabaseServiceProvider,
+  ViewServiceProvider,
   Facade,
 } = require('@orchestr-sh/orchestr');
 
@@ -19,9 +17,6 @@ const { setApp } = require('../app/appInstance');
 const { AppServiceProvider } = require('../app/Providers/AppServiceProvider');
 const { RouteServiceProvider } = require('../app/Providers/RouteServiceProvider');
 
-/**
- * Create and configure the application
- */
 function createApp() {
   const app = new Application(process.cwd());
 
@@ -30,6 +25,10 @@ function createApp() {
 
   app.register(new ConfigServiceProvider(app, config));
   app.register(new DatabaseServiceProvider(app));
+  app.register(new ViewServiceProvider(app, {
+    paths: [require('path').join(process.cwd(), 'resources', 'views')],
+    extensions: ['.html', '.orchestr.html'],
+  }));
 
   app.register(new AppServiceProvider(app));
   app.register(new RouteServiceProvider(app));

@@ -1,25 +1,20 @@
 const { Route } = require('@orchestr-sh/orchestr');
+const { routeHandler } = require('../app/Support/handleRequest');
+const { HealthController } = require('../app/Controllers/HealthController');
+const { AuthController } = require('../app/Controllers/AuthController');
+const { CategoryController } = require('../app/Controllers/CategoryController');
 const { ItemController } = require('../app/Controllers/ItemController');
-const { verifyApiKey } = require('../middleware/verifyApiKey');
+const { jwtAuth } = require('../middleware/jwtAuth');
 const openapi = require('../openapi.json');
 
 function registerRoutes() {
-  // Root
-  Route.get('/', (req, res) => {
-    res.json({ message: 'Hello from Orchestr!' });
-  });
+  Route.get('/', routeHandler((req, res) => HealthController.root(req, res)));
+  Route.get('/health', routeHandler((req, res) => HealthController.health(req, res)));
 
-  // Health
-  Route.get('/health', (req, res) => {
-    res.json({ status: 'ok' });
-  });
-
-  // OpenAPI spec
   Route.get('/openapi.json', (req, res) => {
     res.json(openapi);
   });
 
-  // Swagger UI docs
   Route.get('/docs', (req, res) => {
     const html = [
       '<!doctype html>',
@@ -40,19 +35,40 @@ function registerRoutes() {
       '</body>',
       '</html>',
     ].join('');
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.header('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   });
 
-  // Items – delegate to ItemController
-  Route.get('/items', (req, res) => ItemController.index(req, res));
-  Route.get('/items/stats/summary', (req, res) => ItemController.statsSummary(req, res));
-  Route.get('/items/:item_id', (req, res) => ItemController.show(req, res));
-  Route.post('/items', (req, res) => ItemController.store(req, res));
-  Route.patch('/items/:item_id', (req, res) => ItemController.update(req, res));
+  Route.post('/auth/register', routeHandler((req, res) => AuthController.register(req, res)));
+  Route.post('/auth/login', routeHandler((req, res) => AuthController.login(req, res)));
 
-  const deleteItemRoute = Route.delete('/items/:item_id', (req, res) => ItemController.destroy(req, res));
-  deleteItemRoute.addMiddleware(verifyApiKey);
+  const meRoute = Route.get('/auth/me', routeHandler((req, res) => AuthController.me(req, res)));
+  meRoute.addMiddleware(jwtAuth);
+
+  Route.get('/items/stats/summary', routeHandler((req, res) => ItemController.statsSummary(req, res)));
+  Route.get('/items', routeHandler((req, res) => ItemController.index(req, res)));
+  Route.get('/items/:item_id', routeHandler((req, res) => ItemController.show(req, res)));
+
+  const storeItemRoute = Route.post('/items', routeHandler((req, res) => ItemController.store(req, res)));
+  storeItemRoute.addMiddleware(jwtAuth);
+
+  const updateItemRoute = Route.patch('/items/:item_id', routeHandler((req, res) => ItemController.update(req, res)));
+  updateItemRoute.addMiddleware(jwtAuth);
+
+  const deleteItemRoute = Route.delete('/items/:item_id', routeHandler((req, res) => ItemController.destroy(req, res)));
+  deleteItemRoute.addMiddleware(jwtAuth);
+
+  Route.get('/categories', routeHandler((req, res) => CategoryController.index(req, res)));
+  Route.get('/categories/:category_id', routeHandler((req, res) => CategoryController.show(req, res)));
+
+  const storeCategoryRoute = Route.post('/categories', routeHandler((req, res) => CategoryController.store(req, res)));
+  storeCategoryRoute.addMiddleware(jwtAuth);
+
+  const updateCategoryRoute = Route.patch('/categories/:category_id', routeHandler((req, res) => CategoryController.update(req, res)));
+  updateCategoryRoute.addMiddleware(jwtAuth);
+
+  const deleteCategoryRoute = Route.delete('/categories/:category_id', routeHandler((req, res) => CategoryController.destroy(req, res)));
+  deleteCategoryRoute.addMiddleware(jwtAuth);
 }
 
 module.exports = { registerRoutes };

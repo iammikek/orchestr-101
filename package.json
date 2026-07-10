@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@orchestr-sh/orchestr": "^1.9.4",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.11.1",
     "drizzle-orm": "^0.45.1",
-    "reflect-metadata": "^0.2.2",
-    "better-sqlite3": "^9.4.0"
+    "jsonwebtoken": "^9.0.3",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.0",

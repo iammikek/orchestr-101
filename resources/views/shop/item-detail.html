@@ -1,0 +1,14 @@
+@extends('layouts.app')
+
+@section('content')
+<article class="panel">
+  <p class="eyebrow"><a href="/shop/items">← Back to items</a></p>
+  <h1>{{ item.name }}</h1>
+  <dl class="detail-list">
+    <div><dt>Price</dt><dd>${{ item.price }}</dd></div>
+    <div><dt>Category</dt><dd>@if (category) {{ category.name }} @else Uncategorized @endif</dd></div>
+    <div><dt>Description</dt><dd>@if (item.description) {{ item.description }} @else No description. @endif</dd></div>
+  </dl>
+  <p class="muted">Same record as <a href="/items/{{ item.id }}">GET /items/{{ item.id }}</a> (JSON).</p>
+</article>
+@endsection

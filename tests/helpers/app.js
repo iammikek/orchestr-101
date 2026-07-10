@@ -1,40 +1,45 @@
 /**
  * Test app and HTTP server helper.
- * Creates app with test DB, ensures items table, starts server on random port.
  */
+const fs = require('fs');
+const path = require('path');
 const http = require('http');
 const { Kernel } = require('@orchestr-sh/orchestr');
 const { createApp } = require('../../bootstrap/app');
+const { sessionMiddleware } = require('../../middleware/session');
+const { exceptionHandler } = require('../../middleware/exceptionHandler');
 
-async function ensureItemsTable(app) {
+async function migrateTestDatabase(app) {
   const db = app.make('db');
   const connection = db.connection();
   await connection.connect();
   const adapter = connection.getAdapter();
   const raw = adapter.rawClient;
-  if (raw) {
-    raw.exec(`
-      CREATE TABLE IF NOT EXISTS items (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        price REAL NOT NULL,
-        category VARCHAR(100)
-      )
-    `);
-  }
+  if (!raw) return;
+
+  const schema = fs.readFileSync(path.join(process.cwd(), 'database', 'schema.sql'), 'utf8');
+  raw.exec(schema);
 }
 
-/**
- * Create app, boot, ensure table, start HTTP server on random port.
- * @returns {{ baseUrl: string, close: () => Promise<void>, app: import('@orchestr-sh/orchestr').Application }}
- */
+async function resetTables(app) {
+  const db = app.make('db');
+  const connection = db.connection();
+  await connection.connect();
+  const adapter = connection.getAdapter();
+  const raw = adapter.rawClient;
+  if (!raw) return;
+  raw.exec('DELETE FROM items; DELETE FROM categories; DELETE FROM users;');
+}
+
 async function createTestServer() {
   const app = createApp();
   await app.boot();
-  await ensureItemsTable(app);
+  await migrateTestDatabase(app);
 
   const kernel = new Kernel(app);
+  kernel.use(sessionMiddleware);
+  kernel.use(exceptionHandler);
+
   const server = http.createServer((req, res) => {
     kernel.handle(req, res).catch((err) => {
       console.error(err);
@@ -51,21 +56,8 @@ async function createTestServer() {
     baseUrl,
     app,
     close: () => new Promise((resolve, reject) => server.close((err) => (err ? reject(err) : resolve()))),
+    resetTables: () => resetTables(app),
   };
 }
 
-/**
- * Clear all rows from items table (between tests).
- * @param {import('@orchestr-sh/orchestr').Application} app
- */
-async function clearItems(app) {
-  if (!app) return;
-  const db = app.make('db');
-  const connection = db.connection();
-  await connection.connect();
-  const adapter = connection.getAdapter();
-  const raw = adapter.rawClient;
-  if (raw) raw.exec('DELETE FROM items');
-}
-
-module.exports = { createTestServer, ensureItemsTable, clearItems };
+module.exports = { createTestServer, resetTables, migrateTestDatabase };

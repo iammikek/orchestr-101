@@ -14,10 +14,12 @@ A step-by-step guide to building a minimal Orchestr app with Docker, SQLite, and
 6. **A persistent database** (SQLite + Drizzle/Ensemble) for items
 7. **A test framework** (Vitest + HTTP server) for API tests
 8. **A CI pipeline** (GitHub Actions) for automated testing and Docker build
-9. **API key authentication** (middleware) for protecting endpoints
-10. **ItemController** (`app/Controllers/ItemController.js`) – Laravel-style resource controller
-11. **ItemService** (`app/Services/ItemService.js`) – business logic used by the controller (e.g. stats)
-12. **Database schema** – migrations and table creation on startup
+9. **JWT authentication** (`jsonwebtoken`) for API endpoints — register, login, me
+10. **Catalog Shop** at `/shop` — Orchestr View templates with session auth
+11. **ItemController**, **CategoryController**, **AuthController** — Laravel-style resource controllers
+12. **UserService**, **CategoryService**, **ItemService** — business logic layer
+13. **Database schema** — users, categories, items (with `category_id` FK) via migrations
+14. **28 feature tests** (Vitest) matching laravel-101 parity, plus `/docs` and `/openapi.json` tests
 
 By the end, you can start the API with a single command.
 
@@ -69,9 +71,9 @@ npm run serve
 npm run test:run
 ```
 
-Then open **http://localhost:3000** for the API.
+Then open **http://127.0.0.1:8005** for the API and **http://127.0.0.1:8005/shop** for the browser UI.
 
-**Note:** The app works with defaults (`API_KEY=dev-key-123`, `DB_DATABASE=database/database.sqlite`). Set env vars to override.
+**Note:** Defaults work out of the box (`JWT_SECRET=change-me-in-production`, `DB_DATABASE=database/database.sqlite`, port **8005**).
 
 ---
 
@@ -535,13 +537,14 @@ class ItemService {
 
 | Goal | Command |
 |------|---------|
-| Start app (local) | `npm run serve` or `npm run start` |
+| Start app (local) | `make serve` or `npm run serve` |
 | Start app (Docker) | `docker compose up --build` |
-| Run tests | `npm run test:run` |
+| Run tests | `npm run test:run` (28 feature + 2 docs/openapi) |
 | Tests with coverage | `npm run test:coverage` |
-| Migrations | `npm run migrate` or `npm run orchestr migrate` |
-| API base URL | http://localhost:3000 |
-| DELETE auth | Header `X-API-Key: dev-key-123` (or set `API_KEY`) |
+| Migrations | `npm run migrate` |
+| API base URL | http://127.0.0.1:8005 |
+| Shop UI | http://127.0.0.1:8005/shop |
+| API auth | JWT Bearer token from `POST /auth/login` |
 
 ---
 
@@ -549,9 +552,9 @@ class ItemService {
 
 Use `.env` to configure the app; see [.env.example](.env.example) for all options.
 
-- APP_NAME, APP_ENV, APP_DEBUG, APP_PORT, APP_HOST
+- APP_NAME, APP_ENV, APP_DEBUG, APP_PORT (default **8005**), APP_HOST
 - DB_CONNECTION, DB_DATABASE
-- API_KEY
+- JWT_SECRET
 
 Defaults work out of the box for local development.
 

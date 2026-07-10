@@ -1,0 +1,40 @@
+@extends('layouts.app')
+
+@section('content')
+<section class="panel narrow">
+  <h1>Create account</h1>
+  <p class="muted">
+    Sign up here for the shop. The JSON API still has its own
+    <code>POST /auth/register</code> endpoint for mobile apps and curl.
+  </p>
+
+  <form method="post" action="/shop/register">
+    @if (firstError)
+      <p class="form-error">{{ firstError }}</p>
+    @endif
+    <div class="mb-3">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ oldInput.email }}" required>
+      @if (errors.email)
+        <p class="form-error">{{ errors.email }}</p>
+      @endif
+    </div>
+    <div class="mb-3">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    <div class="mb-3">
+      <label for="password_confirmation">Confirm password</label>
+      <input type="password" id="password_confirmation" name="password_confirmation" required>
+    </div>
+    <div class="actions">
+      <button type="submit" class="button">Create account</button>
+    </div>
+  </form>
+
+  <p class="muted">
+    Already have an account?
+    <a href="/shop/login">Log in</a>
+  </p>
+</section>
+@endsection

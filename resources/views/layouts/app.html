@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ pageTitle }} · orchestr-101</title>
+  <link rel="stylesheet" href="/shop/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/shop">Catalog Shop</a>
+      <nav class="nav">
+        <a href="/shop">Home</a>
+        <a href="/shop/items">Items</a>
+        <a href="/items">API</a>
+      </nav>
+      <div class="auth">
+        @if (isLoggedIn)
+          <span class="muted">{{ userEmail }}</span>
+          <form method="post" action="/shop/logout">
+            <button type="submit" class="link-button">Log out</button>
+          </form>
+        @else
+          <a href="/shop/login">Log in</a>
+        @endif
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    @if (flashSuccess)
+      <ul class="messages">
+        <li class="message success">{{ flashSuccess }}</li>
+      </ul>
+    @endif
+    @if (flashError)
+      <ul class="messages">
+        <li class="message error">{{ flashError }}</li>
+      </ul>
+    @endif
+    @if (flashInfo)
+      <ul class="messages">
+        <li class="message info">{{ flashInfo }}</li>
+      </ul>
+    @endif
+
+    @yield('content')
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p class="muted">
+        Server-rendered Orchestr View templates — same services as the JSON API.
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

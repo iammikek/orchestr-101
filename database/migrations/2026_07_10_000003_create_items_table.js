@@ -6,8 +6,9 @@ module.exports = class extends Migration {
       table.id();
       table.string('name', 255);
       table.text('description').nullable();
-      table.float('price');
-      table.string('category', 100).nullable();
+      table.string('price', 32);
+      table.integer('category_id').nullable();
+      table.foreign('category_id').references('categories.id').onDelete('set null');
     });
   }
 

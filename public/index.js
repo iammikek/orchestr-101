@@ -1,44 +1,30 @@
 /**
  * HTTP Entry Point
- *
- * Bootstraps the application and starts the server.
- * Pattern from orchestr-sh-skeleton.
- *
- * Usage: node public/index.js  (or npm run serve / npm run start)
  */
 
 const { Kernel } = require('@orchestr-sh/orchestr');
 const { createApp } = require('../bootstrap/app');
+const { sessionMiddleware } = require('../middleware/session');
+const { exceptionHandler } = require('../middleware/exceptionHandler');
 
-async function ensureItemsTable(app) {
-  const db = app.make('db');
-  const connection = db.connection();
-  await connection.connect();
-  const adapter = connection.getAdapter();
-  const raw = adapter.rawClient;
-  if (raw) {
-    raw.exec(`
-      CREATE TABLE IF NOT EXISTS items (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        price REAL NOT NULL,
-        category VARCHAR(100)
-      )
-    `);
-  }
+async function runMigrations(app) {
+  const { AppConsoleKernel } = require('../app/Console/Kernel');
+  const kernel = new AppConsoleKernel(app);
+  await kernel.run(['node', 'bootstrap/cli.js', 'migrate']);
 }
 
 async function main() {
   const app = createApp();
   await app.boot();
-
-  await ensureItemsTable(app);
+  await runMigrations(app);
 
   const kernel = new Kernel(app);
+  kernel.use(sessionMiddleware);
+  kernel.use(exceptionHandler);
+
   const config = app.make('config');
-  const port = config.get('app.port', 3000);
-  const host = config.get('app.host', 'localhost');
+  const port = config.get('app.port', 8005);
+  const host = config.get('app.host', '127.0.0.1');
 
   kernel.listen(port, host, () => {
     console.log(`\x1b[32m[Orchestr]\x1b[0m Server running at http://${host}:${port}`);
